@@ -1,0 +1,7 @@
+# @package _global_
+defaults:
+  - override /model: flexible_cnn
+
+optuna:
+  study_name: scratch_cnn_study
+  n_trials: 20

@@ -1,0 +1,7 @@
+type: step
+step_size: 10
+gamma: 0.1
+
+search_space:
+  step_size: [5, 10, 15]
+  gamma: [0.1, 0.2, 0.5]

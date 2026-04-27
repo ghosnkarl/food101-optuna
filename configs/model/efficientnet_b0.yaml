@@ -1,0 +1,17 @@
+type: transfer
+backbone: efficientnet_b0
+pretrained: true
+num_classes: 101
+
+freeze_backbone: false
+fine_tune_from_layer: features.6
+fc_hidden_size: 256
+dropout_rate: 0.3
+lr_multiplier_backbone: 0.1
+
+search_space:
+  freeze_backbone: [true, false]
+  fine_tune_from_layer: [features.5, features.6, none]
+  fc_hidden_size: { low: 128, high: 512 }
+  dropout_rate: { low: 0.1, high: 0.5 }
+  lr_multiplier_backbone: [0.01, 0.1, 1.0]

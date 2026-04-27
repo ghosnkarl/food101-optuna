@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"d:\\\\TorchVision Practice\\\\Optuna\" -name \"*.py\" -not -path \"*/.venv/*\" -exec grep -l \"user_attrs\\\\|set_user_attr\" {} \\\\;)"
+    ]
+  }
+}

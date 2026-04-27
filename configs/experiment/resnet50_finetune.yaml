@@ -1,0 +1,7 @@
+# @package _global_
+defaults:
+  - override /model: resnet50
+
+optuna:
+  study_name: resnet50_study
+  n_trials: 15

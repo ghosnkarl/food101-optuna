@@ -1,0 +1,17 @@
+type: transfer
+backbone: vit_b_16
+pretrained: true
+num_classes: 101
+
+freeze_backbone: false
+fine_tune_from_layer: encoder.layers.10 # unfreeze last 2 transformer blocks
+fc_hidden_size: 256
+dropout_rate: 0.1
+lr_multiplier_backbone: 0.1
+
+search_space:
+  freeze_backbone: [true, false]
+  fine_tune_from_layer: [encoder.layers.8, encoder.layers.10, none]
+  fc_hidden_size: { low: 128, high: 512 }
+  dropout_rate: { low: 0.0, high: 0.3 }
+  lr_multiplier_backbone: [0.01, 0.1, 1.0]

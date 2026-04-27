@@ -1,0 +1,34 @@
+defaults:
+  - model: resnet50
+  - optimizer: adam
+  - scheduler: step
+  - dataset: food101
+  - training: default
+  - _self_
+
+seed: 42
+device: auto
+
+model:
+  freeze_backbone: false
+  fine_tune_from_layer: layer3
+  fc_hidden_size: 285
+  dropout_rate: 0.3163
+  lr_multiplier_backbone: 1.0
+
+dataset:
+  batch_size: 32
+  augmentation:
+    level: moderate
+
+optimizer:
+  lr: 0.0002956
+  weight_decay: 3.289e-05
+
+scheduler:
+  step_size: 15
+  gamma: 0.1
+
+training:
+  n_epochs: 40
+  pruning: false

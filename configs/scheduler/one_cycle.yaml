@@ -1,0 +1,9 @@
+type: one_cycle
+max_lr: ${optimizer.lr}
+pct_start: 0.3 # 30% of training for warmup
+div_factor: 25.0 # initial learning rate = max_lr / div_factor
+final_div_factor: 1e4 # minimum learning rate = initial_lr / final_div_factor
+
+search_space:
+  pct_start: [0.1, 0.2, 0.3]
+  div_factor: [10.0, 25.0, 50.0]

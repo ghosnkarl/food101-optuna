@@ -1,0 +1,7 @@
+type: adam
+lr: 1e-3
+weight_decay: 1e-4
+
+search_space:
+  lr: { low: 1e-4, high: 1e-2, log: True }
+  weight_decay: { low: 1e-5, high: 1e-3, log: True }

@@ -1,0 +1,7 @@
+# @package _global_
+defaults:
+  - override /model: convnext_tiny
+
+optuna:
+  study_name: convnext_tiny_study
+  n_trials: 15

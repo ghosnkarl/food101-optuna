@@ -1,0 +1,21 @@
+name: food101
+root: ./data
+num_classes: 101
+image_size: 224
+num_workers: 6
+persistent_workers: true   # avoids re-spawning workers between epochs
+train_val_split: 0.8 # 80% for training, 20% for validation
+batch_size: 64        # default for train.py; override with dataset.batch_size=32
+augmentation:
+  level: moderate # default for train.py; Optuna searches over [minimal, moderate, aggressive]
+
+  mixup_alpha: 0.2 # batch-level; 0.0 = disabled
+  cutmix_alpha: 1.0 # batch-level; 0.0 = disabled
+
+  normalize:
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+
+search_space:
+  batch_size: [32, 64, 128]
+  augmentation_level: ["minimal", "moderate", "aggressive"]

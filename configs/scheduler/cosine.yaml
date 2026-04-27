@@ -1,0 +1,6 @@
+type: cosine
+T_max: ${training.n_epochs}
+eta_min: 1e-6
+
+search_space:
+  eta_min: { low: 1e-7, high: 1e-5, log: True }

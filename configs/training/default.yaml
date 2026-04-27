@@ -1,0 +1,10 @@
+n_epochs: 20
+amp: true
+gradient_clip_val: 1.0
+label_smoothing: 0.1
+pruning: true
+
+early_stopping:
+  enabled: true
+  patience: 5
+  min_delta: 0.001

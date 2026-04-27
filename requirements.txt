@@ -1,0 +1,16 @@
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch
+torchvision
+numpy
+pandas
+matplotlib
+tqdm
+hydra-core
+torchmetrics
+jupyter
+ipykernel
+notebook
+ipywidgets
+optuna
+torchviz
+scikit-learn

@@ -1,0 +1,17 @@
+type: flexible_cnn
+
+# Fixed architecture (used by train.py for a single run)
+n_layers: 4
+n_filters: [64, 128, 256, 256]
+kernel_sizes: [3, 3, 3, 3]
+dropout_rate: 0.3
+fc_size: 512
+
+# Optuna search space bounds (used by optimize.py for hyperparameter tuning)
+search_space:
+  n_layers: { low: 3, high: 6 }
+  n_filters_start: { low: 32, high: 128 }  # filters in the first layer
+  filter_growth: [1, 2]                     # multiply per layer: 1=uniform, 2=doubling
+  kernel_sizes: [3, 5]
+  dropout_rate: { low: 0.1, high: 0.5 }
+  fc_size: { low: 256, high: 1024 }
