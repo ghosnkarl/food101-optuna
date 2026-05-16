@@ -39,3 +39,6 @@ Thumbs.db
 
 # Claude Configurations
 .claude/
+
+app.py
+space_requirements.txt
