@@ -2,35 +2,52 @@
 
 Automated hyperparameter search for image classification on the [Food-101](https://data.vision.ee.ethz.ch/cvl/datasets_extra/food-101/) dataset (101 classes). Uses [Optuna](https://optuna.org/) (TPE sampler + median pruner) to tune architecture, optimizer, scheduler, and augmentation across 7 model families. Configuration is managed with [Hydra](https://hydra.cc/).
 
+**Live demo:** [huggingface.co/spaces/karlghosn/food101-demo](https://huggingface.co/spaces/karlghosn/food101-demo) — upload any food photo, get top-5 predictions.
+
 ---
 
 ## Results
 
 ### Optuna Study — Best Trial per Model
 
-| Model | Top-1 Accuracy | Best Trial | Best Optimizer | Best Scheduler |
-|---|---|---|---|---|
-| **ResNet-50** | **82.3%** | 17 | Adam | StepLR |
-| ConvNeXt-Tiny | 80.0% | 16 | SGD | OneCycleLR |
-| EfficientNet-B0 | 78.5% | 14 | SGD | OneCycleLR |
-| ViT-B/16 | 77.0% | 15 | SGD | Cosine |
-| ResNet-18 | 76.4% | 14 | SGD | OneCycleLR |
-| MobileNet-V3 | 71.7% | 12 | Adam | Cosine |
-| CNN from scratch | 56.2% | 1 | Adam | OneCycleLR |
+| Model | Top-1 (val) | Optimizer | Scheduler |
+|---|---|---|---|
+| **Swin-B** | **88.44%** | AdamW | Cosine |
+| ConvNeXt-Base | 86.90% | AdamW | Warmup-Cosine |
+| Swin-T | 86.76% | AdamW | Warmup-Cosine |
+| EfficientNet-V2 M | 85.81% | AdamW | OneCycleLR |
+| EfficientNet-V2 S | 85.25% | AdamW | ReduceLROnPlateau |
+| ResNet-152 | 84.67% | AdamW | ReduceLROnPlateau |
+| DenseNet-161 | 82.99% | AdamW | ReduceLROnPlateau |
 
 Full per-trial data, hyperparameter importances, and accuracy plots are in [`results/comparison/`](results/comparison/).
 
-### ResNet-50 Final Run (best Optuna config, trained to convergence)
+### Swin-B Final Run (best Optuna config, trained to convergence)
 
 | Metric | Value |
 |---|---|
-| Top-1 Accuracy | **86.8%** |
-| Top-5 Accuracy | **97.2%** |
-| F1 Score | **86.8%** |
-| Precision | **86.9%** |
-| Recall | **86.8%** |
+| Top-1 Accuracy | **91.87%** |
+| Top-5 Accuracy | **98.76%** |
+| F1 Score | **91.85%** |
+| Precision | **91.91%** |
+| Recall | **91.87%** |
 
-> Trained with `python train.py --config-name resnet50_final`. Metrics saved to [`results/resnet50/metrics.json`](results/resnet50/metrics.json).
+Evaluated on the official Food-101 test set (25,250 images). The jump from 88.44% (Optuna val) to 91.87% (test) reflects training to convergence with EMA and a longer epoch budget.
+
+> Metrics saved to [`results/swin_b/metrics.json`](results/swin_b/metrics.json). Model weights on [HF Hub](https://huggingface.co/karlghosn/swin-b-food101).
+
+To reproduce:
+```bash
+python train.py model=swin_b optimizer=adamw scheduler=cosine \
+  optimizer.lr=0.0009504011144111275 \
+  optimizer.weight_decay=0.0072480483863032845 \
+  scheduler.eta_min=5.3048e-7 \
+  dataset.augmentation.level=randaugment \
+  training.n_epochs=75 \
+  training.pruning=false \
+  training.ema.enabled=true \
+  training.early_stopping.patience=10
+```
 
 ---
 
@@ -38,15 +55,15 @@ Full per-trial data, hyperparameter importances, and accuracy plots are in [`res
 
 **Option 1 — automated (Linux/macOS/WSL):**
 ```bash
-git clone <your-repo-url>
-cd <repo-name>
+git clone https://github.com/ghosnkarl/food101-optuna
+cd food101-optuna
 bash setup.sh
 ```
 
 **Option 2 — manual:**
 ```bash
-git clone <your-repo-url>
-cd <repo-name>
+git clone https://github.com/ghosnkarl/food101-optuna
+cd food101-optuna
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
@@ -63,17 +80,15 @@ The Food-101 dataset (~5 GB) downloads automatically on first run via `torchvisi
 ### Single training run
 
 ```bash
-# Train with the best ResNet-50 config (reproduces the results above)
-python train.py --config-name resnet50_final
-
 # Train with any model using default hyperparameters
-python train.py model=resnet50
-python train.py model=resnet18
-python train.py model=efficientnet_b0
-python train.py model=vit_b_16
+python train.py model=swin_b
+python train.py model=swin_t
+python train.py model=convnext_base
+python train.py model=efficientnet_v2_m
+python train.py model=resnet152
 
 # Override any hyperparameter on the fly
-python train.py model=resnet50 training.n_epochs=30 dataset.batch_size=32
+python train.py model=swin_b training.n_epochs=30 dataset.batch_size=32
 ```
 
 Results are saved to `results/<model>/` (checkpoint + `metrics.json`).
@@ -108,6 +123,7 @@ optuna-dashboard sqlite:///results/optuna_results.db
 ```
 ├── train.py                   # Single-run entrypoint
 ├── optimize.py                # Optuna multi-experiment entrypoint
+├── app.py                     # Gradio demo (HF Spaces)
 ├── setup.sh                   # Venv setup script
 ├── requirements.txt
 ├── configs/
@@ -134,9 +150,9 @@ optuna-dashboard sqlite:///results/optuna_results.db
 │   │   └── progress.py        # Nested progress bars
 │   └── optuna_objective.py    # Optuna objective (samples all hyperparameters)
 └── results/
-    ├── resnet50/
-    │   └── metrics.json       # Final test metrics
-    ├── resnet50_study/        # Optuna artifacts for ResNet-50 study
+    ├── swin_b/
+    │   └── metrics.json       # Final test metrics (91.87% Top-1)
+    ├── swin_b_study/          # Optuna artifacts for Swin-B study
     ├── comparison/            # Cross-model comparison CSV and plot
     └── ...                    # One folder per study
 ```
@@ -160,12 +176,12 @@ Each model config contains both fixed defaults (used by `train.py`) and a `searc
 
 | Model | Type | Backbone |
 |---|---|---|
-| `flexible_cnn` | From scratch | Configurable 3–6 layer CNN |
-| `resnet18` | Transfer learning | ResNet-18 (ImageNet pretrained) |
-| `resnet50` | Transfer learning | ResNet-50 (ImageNet pretrained) |
-| `efficientnet_b0` | Transfer learning | EfficientNet-B0 |
-| `mobilenet_v3` | Transfer learning | MobileNet-V3 Small |
-| `convnext_tiny` | Transfer learning | ConvNeXt-Tiny |
-| `vit_b_16` | Transfer learning | Vision Transformer B/16 |
+| `swin_b` | Transfer learning | Swin Transformer B (ImageNet pretrained) |
+| `swin_t` | Transfer learning | Swin Transformer T (ImageNet pretrained) |
+| `convnext_base` | Transfer learning | ConvNeXt-Base (ImageNet pretrained) |
+| `efficientnet_v2_m` | Transfer learning | EfficientNet-V2 M (ImageNet pretrained) |
+| `efficientnet_v2_s` | Transfer learning | EfficientNet-V2 S (ImageNet pretrained) |
+| `resnet152` | Transfer learning | ResNet-152 (ImageNet pretrained) |
+| `densenet161` | Transfer learning | DenseNet-161 (ImageNet pretrained) |
 
-Transfer models support differential learning rates (lower LR for backbone, higher for the classification head) and partial fine-tuning strategies (`freeze_backbone`, `fine_tune_from_layer`).
+All models use a two-layer classification head (Dropout → Linear → ReLU → Linear) replacing the original classifier. Differential learning rates are applied — the backbone trains at a fraction of the head LR. Partial fine-tuning is configurable via `freeze_backbone` and `fine_tune_from_layer`.
