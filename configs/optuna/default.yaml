@@ -6,6 +6,6 @@ storage: sqlite:///results/optuna_results.db
 pruner:
   type: median
   n_startup_trials: 5
-  n_warmup_steps: 3
+  n_warmup_steps: 5
 sampler:
   type: tpe

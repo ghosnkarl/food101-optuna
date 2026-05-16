@@ -1,0 +1,7 @@
+type: warmup_cosine
+warmup_epochs: 5
+eta_min: 1.0e-6
+
+search_space:
+  warmup_epochs: [3, 5, 10]
+  eta_min: { low: 1.0e-7, high: 1.0e-5, log: true }

@@ -6,12 +6,19 @@ from omegaconf import DictConfig
 
 # Maps backbone name -> (loader fn, feature dim, classifier attribute name)
 _BACKBONE_REGISTRY: dict[str, tuple[callable, int, str]] = {
-    "resnet18": (tv_models.resnet18, 512, "fc"),
-    "resnet50": (tv_models.resnet50, 2048, "fc"),
-    "efficientnet_b0": (tv_models.efficientnet_b0, 1280, "classifier"),
+    "resnet18":           (tv_models.resnet18,           512,  "fc"),
+    "resnet50":           (tv_models.resnet50,           2048, "fc"),
+    "resnet152":          (tv_models.resnet152,          2048, "fc"),
+    "densenet161":        (tv_models.densenet161,        2208, "classifier"),
+    "efficientnet_b0":    (tv_models.efficientnet_b0,   1280, "classifier"),
+    "efficientnet_v2_s":  (tv_models.efficientnet_v2_s, 1280, "classifier"),
+    "efficientnet_v2_m":  (tv_models.efficientnet_v2_m, 1280, "classifier"),
     "mobilenet_v3_small": (tv_models.mobilenet_v3_small, 576, "classifier"),
-    "convnext_tiny": (tv_models.convnext_tiny, 768, "classifier"),
-    "vit_b_16": (tv_models.vit_b_16, 768, "heads"),
+    "convnext_tiny":      (tv_models.convnext_tiny,      768, "classifier"),
+    "convnext_base":      (tv_models.convnext_base,     1024, "classifier"),
+    "swin_t":             (tv_models.swin_t,              768, "head"),
+    "swin_b":             (tv_models.swin_b,             1024, "head"),
+    "vit_b_16":           (tv_models.vit_b_16,           768, "heads"),
 }
 
 

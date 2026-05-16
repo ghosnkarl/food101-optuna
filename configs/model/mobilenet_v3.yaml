@@ -14,4 +14,4 @@ search_space:
   fine_tune_from_layer: [features.8, features.10, none]
   fc_hidden_size: { low: 128, high: 512 }
   dropout_rate: { low: 0.1, high: 0.5 }
-  lr_multiplier_backbone: [0.01, 0.1, 1.0]
+  lr_multiplier_backbone: { low: 0.005, high: 1.0 }

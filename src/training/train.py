@@ -6,6 +6,7 @@ import torch.optim as optim
 from torch.cuda.amp import GradScaler
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import OneCycleLR, ReduceLROnPlateau
+from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 import optuna
 from omegaconf import DictConfig
 from src.training.evaluate import evaluate_trial
@@ -23,6 +24,7 @@ def train_epoch(
     gradient_clip_val: float,
     scheduler: object | None,
     pbar: NestedProgressBar,
+    ema_model: AveragedModel | None = None,
 ) -> tuple[float, float]:
     """
     Trains the model for one epoch.
@@ -54,6 +56,9 @@ def train_epoch(
 
         scaler.step(optimizer)
         scaler.update()
+
+        if ema_model is not None:
+            ema_model.update_parameters(model)
 
         # OneCycleLR steps every batch
         if isinstance(scheduler, OneCycleLR):
@@ -94,6 +99,13 @@ def train_model(
     loss_fn = nn.CrossEntropyLoss(label_smoothing=cfg_training.label_smoothing)
     scaler = torch.amp.GradScaler(enabled=cfg_training.amp and device.type == "cuda")
 
+    ema_cfg = cfg_training.get("ema", None)
+    ema_model = None
+    if ema_cfg is not None and ema_cfg.get("enabled", False):
+        ema_model = AveragedModel(
+            model, multi_avg_fn=get_ema_multi_avg_fn(decay=ema_cfg.decay)
+        )
+
     n_epochs: int = cfg_training.n_epochs
     patience: int = cfg_training.early_stopping.patience
     min_delta: float = cfg_training.early_stopping.min_delta
@@ -121,10 +133,12 @@ def train_model(
             cfg_training.gradient_clip_val,
             scheduler,
             pbar,
+            ema_model=ema_model,
         )
 
         pbar.start_validation(len(val_loader))
-        val_acc, val_top5 = evaluate_trial(model, val_loader, device, num_classes=num_classes, pbar=pbar)
+        eval_model = ema_model if ema_model is not None else model
+        val_acc, val_top5 = evaluate_trial(eval_model, val_loader, device, num_classes=num_classes, pbar=pbar)
         pbar.end_validation()
 
         # Epoch-level scheduler stepping
@@ -161,7 +175,12 @@ def train_model(
             epochs_without_improvement = 0
             if checkpoint_path is not None:
                 checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-                torch.save(model.state_dict(), checkpoint_path)
+                state_dict = (
+                    ema_model.module.state_dict()
+                    if ema_model is not None
+                    else model.state_dict()
+                )
+                torch.save(state_dict, checkpoint_path)
         else:
             epochs_without_improvement += 1
             if (

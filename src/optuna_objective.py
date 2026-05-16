@@ -53,8 +53,11 @@ def _build_model(trial: optuna.Trial, cfg: DictConfig) -> torch.nn.Module:
         dropout = trial.suggest_float(
             "dropout_rate", ss.dropout_rate.low, ss.dropout_rate.high
         )
-        lr_multiplier = trial.suggest_categorical(
-            "lr_multiplier_backbone", list(ss.lr_multiplier_backbone)
+        lr_multiplier = trial.suggest_float(
+            "lr_multiplier_backbone",
+            ss.lr_multiplier_backbone.low,
+            ss.lr_multiplier_backbone.high,
+            log=True,
         )
 
         return (
@@ -117,6 +120,21 @@ def _build_optimizer(
             lr,
         )
 
+    if optimizer_name == "adamw":
+        ss = cfg.optimizers["adamw"].search_space
+        lr = trial.suggest_float("lr", ss.lr.low, ss.lr.high, log=ss.lr.log)
+        weight_decay = trial.suggest_float(
+            "weight_decay",
+            ss.weight_decay.low,
+            ss.weight_decay.high,
+            log=ss.weight_decay.log,
+        )
+        if isinstance(model, TransferModel) and lr_multiplier_backbone is not None:
+            param_groups = model.param_groups(lr, lr_multiplier_backbone)
+        else:
+            param_groups = model.parameters()
+        return optim.AdamW(param_groups, lr=lr, weight_decay=weight_decay), lr
+
     raise ValueError(f"Unknown optimizer: {optimizer_name!r}")
 
 
@@ -170,6 +188,22 @@ def _build_scheduler_from_trial(
             }
         )
 
+    elif scheduler_name == "warmup_cosine":
+        ss = cfg.schedulers["warmup_cosine"].search_space
+        warmup_epochs = trial.suggest_categorical(
+            "warmup_epochs", list(ss.warmup_epochs)
+        )
+        eta_min = trial.suggest_float(
+            "eta_min", ss.eta_min.low, ss.eta_min.high, log=ss.eta_min.log
+        )
+        sched_cfg = OmegaConf.create(
+            {
+                "type": "warmup_cosine",
+                "warmup_epochs": warmup_epochs,
+                "eta_min": eta_min,
+            }
+        )
+
     else:
         raise ValueError(f"Unknown scheduler: {scheduler_name!r}")
 
@@ -211,14 +245,15 @@ def objective(trial: optuna.Trial, cfg: DictConfig) -> float:
     model = model.to(device)
 
     # ── Sample optimizer ───────────────────────────────────────────────────────
-    optimizer_name = trial.suggest_categorical("optimizer", ["adam", "sgd"])
+    optimizer_name = trial.suggest_categorical("optimizer", ["adam", "adamw", "sgd"])
     optimizer, lr = _build_optimizer(
         trial, model, optimizer_name, lr_multiplier_backbone, cfg
     )
 
     # ── Sample scheduler ───────────────────────────────────────────────────────
     scheduler_name = trial.suggest_categorical(
-        "scheduler", ["cosine", "step", "reduce_on_plateau", "one_cycle"]
+        "scheduler",
+        ["cosine", "warmup_cosine", "step", "reduce_on_plateau", "one_cycle"],
     )
     scheduler = _build_scheduler_from_trial(
         trial,

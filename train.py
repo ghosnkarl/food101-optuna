@@ -42,6 +42,11 @@ def _build_optimizer(cfg: DictConfig, model: torch.nn.Module) -> optim.Optimizer
             param_groups, lr=opt_cfg.lr, weight_decay=opt_cfg.weight_decay
         )
 
+    if opt_cfg.type == "adamw":
+        return optim.AdamW(
+            param_groups, lr=opt_cfg.lr, weight_decay=opt_cfg.weight_decay
+        )
+
     if opt_cfg.type == "sgd":
         return optim.SGD(
             param_groups,
@@ -105,6 +110,9 @@ def main(cfg: DictConfig) -> None:
         num_classes=cfg.dataset.num_classes,
     )
 
+    print("\nLoading best checkpoint for final evaluation...")
+    model.load_state_dict(torch.load(save_dir / "best_model.pt", map_location=device))
+
     print("\nEvaluating on official Food-101 test set...")
     evaluate_final(
         model,
@@ -112,6 +120,7 @@ def main(cfg: DictConfig) -> None:
         device,
         save_dir=save_dir,
         num_classes=cfg.dataset.num_classes,
+        use_tta=cfg.training.get("tta", False),
     )
 
 

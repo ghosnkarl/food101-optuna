@@ -67,13 +67,13 @@ def _compose_experiment_cfg(experiment: str, cfg: DictConfig) -> DictConfig:
         name: OmegaConf.to_container(
             OmegaConf.load(f"configs/optimizer/{name}.yaml"), resolve=False
         )
-        for name in ["adam", "sgd"]
+        for name in ["adam", "adamw", "sgd"]
     }
     cfg_dict["schedulers"] = {
         name: OmegaConf.to_container(
             OmegaConf.load(f"configs/scheduler/{name}.yaml"), resolve=False
         )
-        for name in ["cosine", "step", "reduce_on_plateau", "one_cycle"]
+        for name in ["cosine", "warmup_cosine", "step", "reduce_on_plateau", "one_cycle"]
     }
 
     # Apply remaining non-defaults fields (optuna overrides etc.)

@@ -1,17 +1,17 @@
 type: transfer
-backbone: efficientnet_b0
+backbone: resnet152
 pretrained: true
 num_classes: 101
 
 freeze_backbone: false
-fine_tune_from_layer: features.6
-fc_hidden_size: 256
+fine_tune_from_layer: layer3
+fc_hidden_size: 512
 dropout_rate: 0.3
-lr_multiplier_backbone: 0.1
+lr_multiplier_backbone: 0.05
 
 search_space:
-  freeze_backbone: [true, false]
-  fine_tune_from_layer: [features.5, features.6, none]
+  freeze_backbone: [false]
+  fine_tune_from_layer: [layer3, layer4, none]
   fc_hidden_size: { low: 128, high: 512 }
   dropout_rate: { low: 0.1, high: 0.5 }
   lr_multiplier_backbone: { low: 0.005, high: 1.0 }
