@@ -14,7 +14,14 @@ experiments:
   - scratch_cnn
   - resnet18_finetune
   - resnet50_finetune
+  - resnet152
+  - densenet161
   - efficientnet_b0
+  - efficientnet_v2_s
+  - efficientnet_v2_m
   - mobilenet_v3
   - convnext_tiny
+  - convnext_base
+  - swin_t
+  - swin_b
   - vit_b_16

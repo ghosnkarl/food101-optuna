@@ -1,10 +1,15 @@
-n_epochs: 20
+n_epochs: 25
 amp: true
 gradient_clip_val: 1.0
 label_smoothing: 0.1
 pruning: true
+tta: false
 
 early_stopping:
   enabled: true
-  patience: 5
+  patience: 7
   min_delta: 0.001
+
+ema:
+  enabled: false
+  decay: 0.9998

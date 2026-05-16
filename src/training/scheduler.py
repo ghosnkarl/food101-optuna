@@ -1,9 +1,11 @@
 import torch.optim as optim
 from torch.optim.lr_scheduler import (
     CosineAnnealingLR,
+    LinearLR,
     LRScheduler,
     OneCycleLR,
     ReduceLROnPlateau,
+    SequentialLR,
     StepLR,
 )
 from omegaconf import DictConfig
@@ -64,7 +66,18 @@ def build_scheduler(
             final_div_factor=cfg.final_div_factor,
         )
 
+    if scheduler_type == "warmup_cosine":
+        warmup_epochs = int(cfg.warmup_epochs)
+        cosine_epochs = max(1, n_epochs - warmup_epochs)
+        warmup = LinearLR(
+            optimizer, start_factor=0.1, end_factor=1.0, total_iters=warmup_epochs
+        )
+        cosine = CosineAnnealingLR(optimizer, T_max=cosine_epochs, eta_min=cfg.eta_min)
+        return SequentialLR(
+            optimizer, schedulers=[warmup, cosine], milestones=[warmup_epochs]
+        )
+
     raise ValueError(
         f"Unknown scheduler type: {scheduler_type!r}. "
-        "Expected one of: none, cosine, step, reduce_on_plateau, one_cycle"
+        "Expected one of: none, cosine, warmup_cosine, step, reduce_on_plateau, one_cycle"
     )

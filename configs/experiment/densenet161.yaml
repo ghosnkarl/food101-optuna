@@ -1,0 +1,7 @@
+# @package _global_
+defaults:
+  - override /model: densenet161
+
+optuna:
+  study_name: densenet161_study
+  n_trials: 25

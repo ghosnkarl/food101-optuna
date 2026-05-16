@@ -4,9 +4,26 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torchvision.transforms import FiveCrop
 import torchmetrics
 
 from src.utils.progress import NestedProgressBar
+
+
+def _tta_predict(
+    model: nn.Module, inputs: torch.Tensor, device: torch.device
+) -> torch.Tensor:
+    """10-crop TTA: FiveCrop + horizontal flip of each crop. Returns averaged logits."""
+    five_crop = FiveCrop(224)
+    crops = five_crop(inputs)
+    flipped = [torch.flip(c, dims=[-1]) for c in crops]
+    all_crops = list(crops) + flipped
+    logits_sum = None
+    for crop in all_crops:
+        with torch.inference_mode():
+            logits = model(crop.to(device))
+        logits_sum = logits if logits_sum is None else logits_sum + logits
+    return logits_sum / len(all_crops)
 
 
 def evaluate_trial(
@@ -51,6 +68,7 @@ def evaluate_final(
     device: torch.device,
     save_dir: Path,
     num_classes: int = 101,
+    use_tta: bool = False,
 ) -> dict[str, float]:
     """
     Full evaluation used by train.py after finding the best model.
@@ -86,7 +104,11 @@ def evaluate_final(
             if labels.ndim == 2:
                 labels = labels.argmax(dim=1)
 
-            outputs = model(inputs)
+            outputs = (
+                _tta_predict(model, inputs, device)
+                if use_tta
+                else model(inputs)
+            )
             top1_metric.update(outputs, labels)
             top5_metric.update(outputs, labels)
             f1_metric.update(outputs, labels)

@@ -1,0 +1,7 @@
+# @package _global_
+defaults:
+  - override /model: efficientnet_v2_s
+
+optuna:
+  study_name: efficientnet_v2_s_study
+  n_trials: 30
